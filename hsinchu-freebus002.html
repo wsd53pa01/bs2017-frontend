@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>5284 lite</title>
+  <!-- Bootstrap core CSS -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom styles for this template -->
+  <link href="stylesheets/dashboard.css" rel="stylesheet">
+</head>
+
+<body>
+
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false"
+          aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        <a class="navbar-brand" href="#">Project name</a>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#">Dashboard</a></li>
+          <li><a href="#">Settings</a></li>
+          <li><a href="#">Profile</a></li>
+          <li><a href="#">Help</a></li>
+        </ul>
+        <form class="navbar-form navbar-right">
+          <input type="text" class="form-control" placeholder="Search...">
+        </form>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-3 col-md-2 sidebar">
+        <ul class="nav nav-sidebar">
+          <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+          <li><a href="#">Reports</a></li>
+          <li><a href="#">Analytics</a></li>
+          <li><a href="#">Export</a></li>
+        </ul>
+        <ul class="nav nav-sidebar">
+          <li><a href="">Nav item</a></li>
+          <li><a href="">Nav item again</a></li>
+          <li><a href="">One more nav</a></li>
+          <li><a href="">Another nav item</a></li>
+          <li><a href="">More navigation</a></li>
+        </ul>
+        <ul class="nav nav-sidebar">
+          <li><a href="">Nav item again</a></li>
+          <li><a href="">One more nav</a></li>
+          <li><a href="">Another nav item</a></li>
+        </ul>
+      </div>
+      <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+
+        <h2>新竹市免費公車預估到站時刻表 <span class="label label-info">lite</span></h2>
+
+
+        <div class="row">
+
+          <div class=" col-xs-6 col-sm-6 col-md-6 col-lg-6">
+            <div id="routes" class="btn-group-vertical btn-block">
+            </div>
+          </div>
+
+          <div class="modal fade" id="myAlertFreeBus" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                  <h4 class="modal-title" id="myModalLabel">Modal title</h4>
+                </div>
+                <div class="modal-body">
+                  <ul id="results" class="list-group">
+
+                  </ul>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script>
+    $(function () {
+      var $routes = $("#routes"),
+        $results = $("#results");
+
+      // 利用 AJAX 取得預先整理好的「公車路線資料」, https://gist.githubusercontent.com/dinowang/5ee16b9758a5d5210681269185ff93a7/raw/fb8357327b3dcb0ce7ee8887e135562c6d21bc30/hsinchu-bus-routes.json
+      $.get(
+        url =
+        "https://gist.githubusercontent.com/dinowang/5ee16b9758a5d5210681269185ff93a7/raw/fb8357327b3dcb0ce7ee8887e135562c6d21bc30/hsinchu-bus-routes.json",
+       null,
+        function (result, status, xhr) {
+          $routes.empty();
+          $results.empty();
+          $(result).each(function (i, item) {
+            $("<a></a>")
+              .addClass("btn  btn-default")
+              .attr({
+                "href": "#",
+                "data-toggle": "modal",
+                "data-target": "#myAlertFreeBus"
+              })
+              .text(item.route)
+              .data("url",item.jsonUrl)
+              .appendTo($routes)
+          });
+        }, "json");
+
+
+      // 傾聽公車路線中所有（包含未來才會出現）按鈕的點擊事件
+      $routes.on("click", "a.btn", function () {
+
+        $getRoutes = $(this)
+
+        $getRoutes.addClass("btn-primary")
+          .siblings("a.btn-primary")
+          .removeClass("btn-primary")
+        $("#myModalLabel").text($getRoutes.text())
+        $results.empty();
+
+        $.get($getRoutes.data("url"), null, function (results, status, xhr) {
+
+          $(results).each(function (i, item) {
+
+            // 整理資料（稍微應用一下 JavaScript 的語言特性：陣列、if、迴圈 ） 
+            var n = 1,
+              schedules = [];
+
+            while (item["班次" + n]) {
+              schedules.push(item["班次" + n]);
+              n++;
+            }
+
+            // 顯示時刻資料
+            $("<li></li>")
+              .addClass("list-group-item")
+              .html("(" + item.序號 + ") 路線編號：" + item.路線編號 + ", 起訖站：" + item.起訖站 + "<br>" + "班次：" +
+                schedules.join(
+                  "、"))
+              .appendTo($results);
+          });
+
+        }, "json")
+        //return false;
+
+      })
+
+
+    });
+  </script>
+</body>
+
+</html>

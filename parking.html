@@ -1,0 +1,290 @@
+!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>桃園路外停車資訊</title>
+  <!-- Bootstrap core CSS -->
+  <!-- Bootstrap core CSS -->
+  <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Custom styles for this template -->
+  <link href="stylesheets/dashboard.css" rel="stylesheet">
+  <style>
+    .maplink {
+      color: papayawhip;
+    }
+
+    .introduction {
+      color: seagreen;
+    }
+
+    h2 {
+      color: orangered;
+    }
+
+    #map {
+      width: 100%;
+      height: 30em;
+    }
+    /* Optional: Makes the sample page fill the window. */
+  </style>
+
+</head>
+
+<body>
+  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDZi0IwsmjKAUqzbjBRqGk6AqVx96MgCRQ&callback=initMap"></script>
+
+  <nav class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container-fluid">
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false"
+          aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        <a class="navbar-brand" href="#">Project name</a>
+      </div>
+      <div id="navbar" class="navbar-collapse collapse">
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#">Dashboard</a></li>
+          <li><a href="#">Settings</a></li>
+          <li><a href="#">Profile</a></li>
+          <li><a href="#">Help</a></li>
+        </ul>
+        <form class="navbar-form navbar-right">
+          <input type="text" class="form-control" placeholder="Search...">
+        </form>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-sm-3 col-md-2 sidebar">
+        <ul class="nav nav-sidebar">
+          <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+          <li><a href="#">Reports</a></li>
+          <li><a href="#">Analytics</a></li>
+          <li><a href="#">Export</a></li>
+        </ul>
+        <ul class="nav nav-sidebar">
+          <li><a href="">Nav item</a></li>
+          <li><a href="">Nav item again</a></li>
+          <li><a href="">One more nav</a></li>
+          <li><a href="">Another nav item</a></li>
+          <li><a href="">More navigation</a></li>
+        </ul>
+        <ul class="nav nav-sidebar">
+          <li><a href="">Nav item again</a></li>
+          <li><a href="">One more nav</a></li>
+          <li><a href="">Another nav item</a></li>
+        </ul>
+      </div>
+      <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+        <h2>桃園路外停車資訊 <span class="label label-info">parking</span></h2>
+        <div class="row">
+          <div class="col-xs-2 col-sm-2 col-md-2 col-lg-2">
+            <div id="areas" class="btn-group-vertical btn-block">
+              <!--區域-->
+            </div>
+          </div>
+
+
+          <div class="col-xs-10 col-sm-10 col-md-10 col-lg-10">
+            <!--<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3623.045397040997!2d120.9506210142792!3d24.759632584101574!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x34684a5cb60622fd%3A0xb0ead5088c97b0db!2z5Lit6I-v5aSn5a24!5e0!3m2!1szh-TW!2stw!4v1491544074267" width="400" height="300" frameborder="0" style="border:0" allowfullscreen></iframe>-->
+            <div id="map"></div>
+            <div id="parkingLots" class="row">
+              <!--停車場-->
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+  <script src="http://ajax.microsoft.com/ajax/jquery.templates/beta1/jquery.tmpl.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+
+  <script id="parkingLot-tmpl" type="text/x-jquery-tmpl">
+    <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 parkingLot">
+      <div class="panel panel-primary">
+        <div class="panel-heading">
+          <h3 class="panel-title">${parkName}</h3>
+        </div>
+        <div class="panel-body">
+          <p class=introduction>${parkId}</p>
+          <p>${payGuide}</p>
+          <img src="http://maps.google.com/maps/api/staticmap?zoom=15s&size=170x160&sensor=false&maptype=SATELLITE&markers=${wgsY},${wgsX}">
+        </div>
+        <div class="panel-heading"> <a href="#" class="maplink" target="_blank">${address}</a></div>
+      </div>
+    </div>
+  </script>
+
+  <script>
+    $(function () {
+      var $areas = $("#areas"),
+        $parkingLots = $("#parkingLots");
+
+      // 利用 AJAX 取得區域資料
+      $.ajax({
+        type: "GET",
+        url: "http://buildschool-chu.azurewebsites.net/parking/areas",
+        data: null,
+        dataType: "jsonp",
+        success: function (result, status, xhr) {
+
+          // 清空原來列表中的區域資料
+          $areas.empty();
+
+          // 清空原來時刻表列表中的停車場資料
+          $parkingLots.empty();
+
+          // $(result).each(function (i, item) { ... })
+          //
+          // 同下，但是更加簡單
+          //
+          // for (var i = 0; i < result.length; i++) {
+          //   var item = result[i];
+          //   ...
+          // }
+          //
+          // 將每一個區域產生一個 <a class="btn btn-default"></a> 按鈕，並帶入相關資料
+          $(result).each(function (i, areaName) {
+            $("<a></a>")
+              .attr('herf', "#")
+              .data('area', areaName)
+              .text(areaName)
+              .addClass('btn')
+              .addClass('btn-default')
+              .appendTo($areas)
+          });
+        }
+      });
+
+      // 傾聽區域中所有按鈕的點擊事件
+      $areas
+        .on("click", "a.btn", function () {
+          // 注意 this 會是被點擊的對象
+          var $a = $(this),
+            areaName = $a.data("area");
+
+          // 視覺控制
+          $a.addClass("btn-primary") // 點擊的按鈕變色
+            .siblings("a.btn-primary") // 尋找到之前被點擊變色的按鈕
+            .removeClass("btn-primary"); // 恢復原狀態(不變色)
+
+          // 清空原來時刻表列表中的停車場資料
+          $parkingLots.empty();
+
+
+          // 利用 AJAX 取得停車場資料
+          $.ajax({
+            type: "GET",
+            url: "http://buildschool-chu.azurewebsites.net/parking/index",
+            data: {
+              "area": areaName
+            },
+            //用json去尋找停車區域的名子
+            dataType: "jsonp",
+            success: function (result, status, xhr) {
+              $(result).each(function (i, item) {
+                var mpUrl = "https://www.google.com.tw/maps?q=" + item.wgsY + ',' + item.wgsX;
+
+                $("#parkingLot-tmpl")
+                  .tmpl(item)
+                  .data("json", item)
+                  //json為名稱可以更改，主要是將資料先包起來                               
+                  .appendTo($parkingLots);
+
+                // 顯示停車場資料
+              });
+              initMap(areaName, result[0].wgsY, result[0].wgsX, 13)
+
+
+            }
+          });
+
+          return false;
+        });
+
+
+      $parkingLots
+        .on("click", "a.maplink", function (event) {
+          var $a = $(this),
+            $parkingLot = $a.parents(".parkingLot"),
+            parkingLot = $parkingLot.data("json"),
+            // index = parkingLot.map(function (d) {
+            //   return d.sna;
+            // }).indexOf($a.text()),
+
+            $location = $("a.btn-primary").text();
+          initMap($location, parkingLot.wgsY, parkingLot.wgsX, 17)
+
+          return false;
+        });
+
+
+
+      function initMap(str, wgsY, wgsX, zom) {
+
+
+        var map; //地圖初始化狀狀態
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: zom,
+          center: new google.maps.LatLng(parseFloat(wgsY), parseFloat(wgsX)),
+          mapTypeId: google.maps.MapTypeId.satellite
+          // SATELLITE 3d
+          // satellite 一般
+        });
+        $.ajax({
+          type: "GET",
+          url: "http://buildschool-chu.azurewebsites.net/parking/index",
+          data: {
+            "area": str
+          },
+          //用json去尋找停車區域的名子
+          dataType: "jsonp",
+          success: function (result) {
+            var timeout = 0 ; 
+            $(result).each(function (i, item) {
+              timeout+=300
+             
+               setTimeout(function() {
+
+ LatLng = new google.maps.LatLng(item.wgsY, item.wgsX);
+
+              var maker = new google.maps.Marker({
+                position: LatLng,
+                map: map,
+                 animation: google.maps.Animation.DROP,
+                title: item.sna
+                
+              });
+
+
+               },timeout)
+
+            });
+          }
+        });
+
+      };
+
+
+    });
+  </script>
+
+
+</body>
+
+</html>
